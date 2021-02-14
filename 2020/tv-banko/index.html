@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang=da>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Clara's Awesome TV-Banko show, series, Ep1 Season 5</title>
+  <style>
+    #video_container video {
+      height: 80vh;
+    }
+
+    #bottom_bar {
+      position: absolute;
+      bottom: 0;
+    }
+
+    #bottom_bar button {
+      width: 10vw;
+      height: 15vh;
+      margin-right: 4vw;
+    }
+
+    #number_container {
+      width: 85vw;
+      float: right;
+    }
+
+    #number_container span:first-child {
+      color: #0f0;
+    }
+
+    #number_container span {
+      font-size: 6em;
+      border-left: 0.05em solid #ccc;
+      padding: 0 0.2em;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="video_container">
+    <video id="video_player" controls width="100%">
+
+    </video>
+  </div>
+  <div id="bottom_bar">
+    <button id="new_number">Nyt nummer</button>
+    <div id="number_container">
+
+      <span>10</span>
+      <span>66</span>
+    </div>
+  </div>
+
+  <script id="data" type="application/json" src="data.json"></script>
+  <script>
+    var data = {
+      '22': {
+        'src': 'videos/22 Mikroovn.mp4',
+        'is_choosen': false
+      },
+      '66': {
+        'src': 'videos/66 Vægten.mp4',
+        'is_choosen': false
+      },
+      '78': {
+        'src': 'videos/78 Skabpåmuseum.mp4',
+        'is_choosen': false
+      }
+    }
+
+    function getRandomInt(max) {
+      return Math.floor(Math.random() * Math.floor(max));
+    }
+
+    function choose_number(data) {
+      var remaining = Object.keys(data).reduce(function (acc, key) {
+        if (!data[key]['is_choosen']) {
+          acc[key] = data[key]
+        }
+        return acc
+      }, {})
+
+      console.log("Remaining numbers, selected")
+
+      var num_remaining = Object.keys(remaining).length
+      var rand = getRandomInt(num_remaining)
+      var next_number = Object.keys(remaining)[rand]
+
+      console.log("Next number choosen", next_number)
+
+      var result = data[next_number]
+      result['key'] = next_number
+
+      return result
+    }
+
+    function insert_number(new_number) {
+      // get video
+      player = document.querySelector('#video_player')
+      player.innerHTML = ''
+      source = document.createElement('source');
+      // play
+      source.src = new_number.src
+      source.data = new_number
+
+      player.appendChild(source)
+      player.load()
+      player.play()
+    }
+
+    function get_new_number() {
+      var original_data = document.querySelector('#number_container').data
+
+      var new_number = choose_number(original_data)
+      console.log('Choose new number', new_number)
+
+      insert_number(new_number)
+
+      new_data = Object.assign({}, original_data)
+      delete new_data[new_number['key']]
+
+      document.querySelector('#number_container').data = new_data
+    }
+
+    function getData() {
+      function data_loaded() {
+        data = JSON.parse(this.responseText)
+
+        const number_container = document.querySelector('#number_container')
+        number_container.innerHTML = '';
+
+        number_container.data = data
+      }
+
+      var oReq = new XMLHttpRequest();
+      oReq.addEventListener("load", data_loaded);
+      oReq.open("GET", "data.json");
+      oReq.send();
+    }
+
+    function document_ready() {
+      // Consider data to be loaded from remote
+      getData()
+
+      const btn_new_number = document.querySelector('#new_number')
+      btn_new_number.onclick = get_new_number
+
+      document.querySelector('#video_player').addEventListener('ended', function () {
+        player = document.querySelector('#video_player')
+        source = player.childNodes[0]
+        new_number = source.data
+
+        // number_container = document.querySelector("#number_container")
+        new_number_elm = document.createElement('span')
+        new_number_elm.innerHTML = new_number.key
+
+        number_container.prepend(new_number_elm)
+      })
+    }
+
+    document.addEventListener("DOMContentLoaded", document_ready);
+  </script>
+</body>
+
+</html>
